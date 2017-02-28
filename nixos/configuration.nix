@@ -13,11 +13,14 @@
   # Use the gummiboot efi boot loader.
   #boot.loader.gummiboot.enable = true;
   boot.loader.systemd-boot.enable = true; #new form
-  boot.loader.efi.canTouchEfiVariables = true;
+  #boot.loader.efi.canTouchEfiVariables = true;
+  boot.loader.grub.enable = true;
+  boot.loader.grub.version = 2;
+  boot.loader.grub.device = "/dev/sda";
 
   boot.kernelPackages = pkgs.linuxPackages_4_8;
 
-  networking.hostName = "bart"; # Define your hostname.
+  networking.hostName = "loki"; # Define your hostname.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
 
   # Select internationalisation properties.
@@ -49,7 +52,6 @@
      #networkmanagerapplet
      bluez-tools
      xorg.xbacklight
-     ethtool
      gnupg
      psmisc
      docker
@@ -93,15 +95,15 @@
     allowUnfree = true;
 
     firefox = {
-     enableGoogleTalkPlugin = true;
-     enableAdobeFlash = true;
-     jre = true;
+     #enableGoogleTalkPlugin = true;
+     #enableAdobeFlash = true;
+     #jre = true;
     };
 
     chromium = {
-     enablePepperFlash = true; # Chromium removed support for Mozilla (NPAPI) plugins so Adobe Flash no longer works
-     enablePepperPDF = true;
-     jre = true;
+     #enablePepperFlash = true; # Chromium removed support for Mozilla (NPAPI) plugins so Adobe Flash no longer works
+     #enablePepperPDF = true;
+     #jre = true;
     };
 
   };
