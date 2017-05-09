@@ -68,12 +68,6 @@
   networking.firewall.extraCommands = ''
   #  iptables -A INPUT -p icmp -j ACCEPT
     iptables -F INPUT
-    iptables -A INPUT -p tcp --match tcp --dport 22 --source 129.88.31.0/24 -j ACCEPT
-    iptables -A INPUT -p tcp --match tcp --dport 22 --source 129.88.160.0/24 -j ACCEPT
-    iptables -A INPUT -p tcp --match tcp --dport 22 --source 129.88.34.193/32 -j ACCEPT
-    iptables -A INPUT -p tcp --match tcp --dport 22 --source 129.88.56.0/25 -j ACCEPT
-    iptables -A INPUT -p tcp --match tcp --dport 22 --source 129.88.71.0/27 -j ACCEPT
-    iptables -A INPUT -p tcp --match tcp --dport 22 --source 88.187.216.213/32 -j ACCEPT
   '';
 
   # Set common environment variables
@@ -167,12 +161,6 @@
   programs.bash = {
     enableCompletion = true;
   };
-
-  # Make sure I can use "openvpn" without entering my password
-  security.sudo.configFile =
-  ''
-    henriot odin = (root) NOPASSWD: ALL
-  '';
 
   # The NixOS release to be compatible with for stateful data such as databases.
   system.stateVersion = "17.03";
