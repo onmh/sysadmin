@@ -8,41 +8,53 @@
 # server-sshfs-targets.sh [-m|-u] conf-file
 # -m|-u specifies action, mount/unmount, mandatory, only one of the two
 # conf-file mandatory configuration file
+# TODO errors to stderr and logging
+# see: https://linuxsimply.com/bash-scripting-tutorial/redirection-and-piping/redirection/echo-to-stderr/
 set -e
 ###############################################################################
 # Default variables
 ERR_BADARGS=65
 MOUNT=0
 UNMOUNT=0
+CONFIG_FILE="value_not_set"
 HELP=0
 USAGE="\n\n     Usage: `basename $0` [-m|-u] <configuration file>\n\n"
 # Command line arguments
-while getopts ":mu:h" Option; do
-    case $Option in
+while getopts ":muh" OPTION; do
+    case ${OPTION} in
         m) MOUNT=1;;
         u) UNMOUNT=1;;
+        # We could have a -f flag for the config file:
+        #f) echo "Config file is: ${OPTARG}" && CONFIG_FILE=${OPTARG};;
         h) HELP=1;;
-        ?) echo "Unrecognized option. Exit 7" && exit 7 ;;
+        \?) echo "Unrecognized option. Exit 7" >&2 && exit 7 ;;
     esac
 done
-# TODO printf and echo to stderr
-if [ $# -ne 2 ]; then
-    echo -e ${USAGE}
-    exit ${ERR_BADARGS}
-elif [ "${HELP}" == "0" ] && [ $# -lt 2 ]; then
-        echo "Input file not found"
-        exit ${ERR_BADARGS}
-elif [ $# -lt 2 ] && [ $1 == '-h' ]; then
-    echo -e ${USAGE}
-    exit 0
-elif [ $# -lt 2 ]; then
-    echo -e ${USAGE}
-    exit ${ERR_BADARGS}
-elif [ "${1}" == "-h" ]; then
+shift $((OPTIND - 1))
+if [ "${HELP}" == "1" ]; then
     echo -e ${USAGE}
     exit 0
 fi
-CONFIG_FILE="${2}"
+if [[ "${MOUNT}" == "1" ]] && [[ "${UNMOUNT}" == "1" ]]; then
+    echo "Cannot mount and unmount at the same time, choose either m or u." >&2
+    echo -e ${USAGE} >&2
+    exit 1
+fi
+# If config file is a flag argument:
+#if [[ ${CONFIG_FILE} == "value_not_set" ]]; then
+#    echo "No config file provided."
+#    echo -e ${USAGE}
+#    exit 2
+#fi
+# If config file is not a flag argument, it is expected as the single remaining
+# command line argument:
+if [[ $# -ne 1 ]]; then
+    echo "Missing configuration file." >&2
+    echo -e ${USAGE} >&2
+    exit 2
+else
+    CONFIG_FILE="${1}"
+fi
 
 ################################################################################
 # Functions
@@ -65,14 +77,14 @@ with user '${T_USER}' on directory '${T_DEST}'" &
 is empty, this \
 is probably not desired and will probably \
 break things, \
-skipping this mount."
+skipping this mount." >&2
         SKIP_MOUNT=1
     elif [[ ${T_DEST} == "/" ]]; then
         echo "(WW) Destination mount point for host ${T_HOST} \
 is mount root, \
 this is probably not desired and will \
 probably break things, \
-skipping this mount."
+skipping this mount." >&2
         SKIP_MOUNT=1
     elif [ ! -d ${MOUNT_DIR}${T_DEST} ]; then
         {
@@ -83,7 +95,7 @@ mount point :"
         } || {
             echo "(WW) Destination mount point directory \
 for host ${T_HOST} \
-does not exist, skipping this mount."
+does not exist, skipping this mount." >&2
             SKIP_MOUNT=1
         }
     fi
@@ -99,7 +111,7 @@ successfully."
                 echo "Mounting of \
 '${T_SRC}' from host '${T_HOST}' \
 with user '${T_USER}' on directory '${T_DEST}' \
-has failed."
+has failed." >&2
             }
         fi
     fi
@@ -128,7 +140,7 @@ successfully."
             echo " Unmounting of \
 '${T_SRC}' mount from host '${T_HOST}' \
 with user '${T_USER}' on directory '${T_DEST}' \
-has failed."
+has failed." >&2
         }
     else
         echo " Share point not mounted. \
@@ -140,13 +152,13 @@ Unmounting not required."
 mount() {
     # -- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
     if [ ! -d ${INSTALL_DIR}${CONF_DIR} ]; then
-        echo "(EE) Configuration directory not found."
+        echo "(EE) Configuration directory not found." >&2
         exit -1
     elif [ ! -f ${MOUNT_TARGETS} ]; then
-        echo "(EE) Mount targets configuration file not found."
+        echo "(EE) Mount targets configuration file not found." >&2
         exit -1
     elif [ ! -d ${MOUNT_DIR} ]; then
-        echo "(EE) Mount root directory not found."
+        echo "(EE) Mount root directory not found." >&2
         exit -1
     else
         TARGETS=`egrep -v "^$|^#" ${INSTALL_DIR}${CONF_DIR}/${MOUNT_TARGETS}`
@@ -162,13 +174,13 @@ mount() {
 unmount() {
     # -- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
     if [ ! -d ${INSTALL_DIR}${CONF_DIR} ]; then
-        echo "(EE) Configuration directory not found."
+        echo "(EE) Configuration directory not found." >&2
         exit -1
     elif [ ! -f ${MOUNTARGETS} ]; then
-        echo "(EE) Mount targets configuration file not found."
+        echo "(EE) Mount targets configuration file not found." >&2
         exit -1
     elif [ ! -d ${MOUNT_DIR} ]; then
-        echo "(EE) Mount root directory not found."
+        echo "(EE) Mount root directory not found." >&2
         exit -1
     else
         TARGETS=`egrep -v "^$|^#" ${INSTALL_DIR}${CONF_DIR}/${MOUNT_TARGETS}`
@@ -224,7 +236,7 @@ readConfig() {
     # Check we have got the required parameters after sourcing the
     # configuration file.
     if [[ ${MOUNT_DIR} == "" ]]; then
-        echo "Mount destination directory is missing"
+        echo "Mount destination directory is missing in configuration file." >&2
     # Don't need the install dir.
     #elif [[ ${INSTALL_DIR} == "" ]]; then
     #    echo "Installation directory is missing"
