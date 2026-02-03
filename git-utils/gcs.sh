@@ -16,11 +16,17 @@ for dir in $(find . -type d -name ".git" | sed 's/.git$//' | egrep -v "\.cache|\
     uptod=$(echo -e "${res}" | grep "^Your branch is up to date" | sed 's/^Your branch is \(up to date\)/\1/')
     # If there are untracked files this variable will not be empty
     untracked=$(echo -e "${res}" | grep -A 2 "^Untracked files")
+    # If there are changes not staged for commit this variable will not be empty
+    changesNotStaged=$(echo -e "${res}" | grep "^Changes not staged for commit")
     #echo -e "${res}"
     if [ "${untracked}" != "" ]; then
       echo -e "# ===  Working on ${dir}  === #\nRepo is on branch ${branch}, status is ${rep_sta} and there are untracked files:\n${untracked}\n# ===  ---  === #"
+    elif [ "${changesNotStaged}" != "" ]; then
+	    changes=$(echo -e "${res}" | egrep "modified:")
+	    echo -e "# ===  Working on ${dir}  === #\nRepo is on branch ${branch}, status is ${rep_sta} and there are changes not staged for commit:\n${changes}\n\n# ===  ---  === #"
     elif [ "${uptod}" == "" ]; then
-      echo -e "# ===  Working on ${dir}  === #\nRepo is on branch ${branch} and it is not up to date: ${rep_sta}\n# ===  ---  === #"
+	    changes=$(echo -e "${res}" | egrep "publish")
+	    echo -e "# ===  Working on ${dir}  === #\nRepo is on branch ${branch} and it is not up to date: ${rep_sta}\n${changes}\n\n# ===  ---  === #"
     else
       echo -e "No untracked files for \"${dir}\" which is up to date and on branch \"${branch}\"\n# === --- === #"
     fi
